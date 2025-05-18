@@ -19,23 +19,17 @@ runs:
   steps:
     - name: Setup Actions Script Path
       shell: bash
-      env:
-        GITHUB_ACTION_PATH: ${{ github.action_path }}
-      run: | # zizmor: ignore[github-env]
-        echo "${GITHUB_ACTION_PATH}" >> $GITHUB_PATH
+      run: |
+        echo "${{ github.action_path }}" >> $GITHUB_PATH
 
     - name: Setup Testing Tools
       shell: bash
       env:
-        APP: ${{ inputs.app }}
         GITHUB_TOKEN: ${{ inputs.token }}
       run: |
-        setup.sh "${APP}"
+        setup.sh "${{ inputs.app }}"
 
     - name: Run Tests
       shell: bash
-      env:
-        APP: ${{ inputs.app }}
-        IMAGE: ${{ inputs.image }}
       run: |
-        run.sh "${APP}" "${IMAGE}"
+        run.sh "${{ inputs.app }}" "${{ inputs.image }}"
