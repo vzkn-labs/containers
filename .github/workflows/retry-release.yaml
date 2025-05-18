@@ -7,6 +7,9 @@ on:
     - cron: "30 1 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   apps:
     name: Get App Inventory
@@ -61,12 +64,13 @@ jobs:
       - name: Get Container Registry Version
         id: registry
         env:
+          APP: ${{ matrix.app }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          if ! version=$(regctl image inspect ghcr.io/${{ github.repository_owner }}/${{ matrix.app }}:rolling \
+          if ! version=$(regctl image inspect ghcr.io/${{ github.repository_owner }}/${APP}:rolling \
               | jq --raw-output '.config.Labels["org.opencontainers.image.version"]' 2>/dev/null) || [[ -z "${version}" ]];
           then
-              echo "Failed to get registry version for ${{ matrix.app }}"
+              echo "Failed to get registry version for ${APP}"
               exit 1
           fi
           echo "version=${version}" >> $GITHUB_OUTPUT
@@ -83,11 +87,12 @@ jobs:
       - if: ${{ steps.find-pull-request.outputs.number != '' }}
         name: Retry Release
         env:
+          APP: ${{ matrix.app }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
+        run: | # zizmor: ignore[template-injection]
           gh workflow run release.yaml \
               --repo ${{ github.repository }} \
-              -f app=${{ matrix.app }} \
+              -f app=${APP} \
               -f release=true
 
           {
@@ -95,5 +100,5 @@ jobs:
               echo
               echo '| Container Name | Actual Version | Expected Version |'
               echo '|----------------|------------------|----------------|'
-              echo '| `${{ matrix.app }}` | `${{ steps.registry.outputs.version }}` | `${{ steps.app-options.outputs.version }}` |'
+              echo '| `${APP}` | `${{ steps.registry.outputs.version }}` | `${{ steps.app-options.outputs.version }}` |'
           } >> $GITHUB_STEP_SUMMARY

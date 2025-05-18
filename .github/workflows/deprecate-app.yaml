@@ -18,6 +18,9 @@ on:
         description: Create Release
         default: true
 
+permissions:
+  contents: read
+
 jobs:
   deprecate:
     name: Deprecate (${{ inputs.app }})
@@ -38,8 +41,10 @@ jobs:
           private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
 
       - name: Delete App Directory
+        env:
+          APP: ${{ inputs.app }}
         run: |
-          rm -rf ./apps/${{ inputs.app }}
+          rm -rf ./apps/${APP}
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
@@ -74,13 +79,15 @@ jobs:
 
       - name: Merge Pull Request
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        env:
+          PULL_NUMBER: ${{ needs.deprecate.outputs.pull-number }}
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
             await github.rest.pulls.merge({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: ${{ needs.deprecate.outputs.pull-number }},
+              pull_number: process.env.PULL_NUMBER,
               merge_method: 'squash',
             });
 
