@@ -1,12 +1,12 @@
 target "docker-metadata-action" {}
 
 variable "APP" {
-  default = "emby"
+  default = "emby-beta"
 }
 
 variable "VERSION" {
   // renovate: datasource=github-releases depName=MediaBrowser/Emby.Releases versioning=loose
-  default = "4.9.1.0-beta"
+  default = "4.9.1.0"
 }
 
 group "default" {
